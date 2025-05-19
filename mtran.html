@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đề Thi Trắc Nghiệm Ma Trận</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- MathJax CDN -->
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+  <!-- math.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/12.0.0/math.min.js"></script>
+</head>
+<body class="bg-gray-100 font-sans">
+  <div class="container mx-auto p-6 max-w-4xl">
+    <h1 class="text-3xl font-bold text-center mb-6">Đề Thi Trắc Nghiệm Ma Trận</h1>
+    
+    <!-- Form thông tin sinh viên -->
+    <div id="infoForm" class="bg-white p-6 rounded shadow mb-6">
+      <h2 class="text-xl font-semibold mb-4">Thông tin sinh viên</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium">Họ tên:</label>
+          <input id="name" type="text" class="w-full p-2 border rounded" required>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Mã số sinh viên:</label>
+          <input id="studentId" type="text" class="w-full p-2 border rounded" required>
+        </div>
+        <button id="startQuiz" class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Bắt đầu làm bài</button>
+      </div>
+    </div>
+
+    <!-- Khu vực bài thi -->
+    <div id="quizContainer" class="hidden">
+      <div id="quiz" class="space-y-6"></div>
+      <button id="submit" class="mt-6 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Nộp bài</button>
+      <div id="result" class="mt-4 text-center text-lg"></div>
+      <!-- Canvas cho minh họa ma trận -->
+      <canvas id="matrixCanvas" class="mt-4 mx-auto" width="300" height="100"></canvas>
+    </div>
+  </div>
+
+  <script>
+    // Câu hỏi và đáp án
+    const questions = [
+      // Nhân ma trận
+      {
+        question: "Tính tích của hai ma trận \\( A = \\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix} \\) và \\( B = \\begin{bmatrix} 5 & 6 \\\\ 7 & 8 \\end{bmatrix} \\).",
+        answers: [
+          "\\( \\begin{bmatrix} 19 & 22 \\\\ 43 & 50 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 10 & 12 \\\\ 21 & 24 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 5 & 12 \\\\ 21 & 32 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 15 & 18 \\\\ 28 & 32 \\end{bmatrix} \\)"
+        ],
+        correct: 0,
+        explanation: "Để tính \\( A \\times B \\), ta thực hiện nhân ma trận: \\( \\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix} \\times \\begin{bmatrix} 5 & 6 \\\\ 7 & 8 \\end{bmatrix} \\). Kết quả là: \\( \\begin{bmatrix} 1 \\cdot 5 + 2 \\cdot 7 & 1 \\cdot 6 + 2 \\cdot 8 \\\\ 3 \\cdot 5 + 4 \\cdot 7 & 3 \\cdot 6 + 4 \\cdot 8 \\end{bmatrix} = \\begin{bmatrix} 19 & 22 \\\\ 43 & 50 \\end{bmatrix} \\)."
+      },
+      {
+        question: "Cho ma trận \\( A = \\begin{bmatrix} 2 & 0 \\\\ 1 & 3 \\end{bmatrix} \\) và \\( B = \\begin{bmatrix} 1 & 4 \\\\ 2 & 5 \\end{bmatrix} \\). Tìm \\( A \\times B \\).",
+        answers: [
+          "\\( \\begin{bmatrix} 2 & 8 \\\\ 7 & 19 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 4 & 8 \\\\ 5 & 15 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 2 & 4 \\\\ 1 & 5 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 8 & 10 \\\\ 11 & 13 \\end{bmatrix} \\)"
+        ],
+        correct: 0,
+        explanation: "Nhân ma trận: \\( \\begin{bmatrix} 2 & 0 \\\\ 1 & 3 \\end{bmatrix} \\times \\begin{bmatrix} 1 & 4 \\\\ 2 & 5 \\end{bmatrix} = \\begin{bmatrix} 2 \\cdot 1 + 0 \\cdot 2 & 2 \\cdot 4 + 0 \\cdot 5 \\\\ 1 \\cdot 1 + 3 \\cdot 2 & 1 \\cdot 4 + 3 \\cdot 5 \\end{bmatrix} = \\begin{bmatrix} 2 & 8 \\\\ 7 & 19 \\end{bmatrix} \\)."
+      },
+      {
+        question: "Tính \\( A \\times B \\) với \\( A = \\begin{bmatrix} 1 & -1 \\\\ 2 & 3 \\end{bmatrix} \\) và \\( B = \\begin{bmatrix} 0 & 1 \\\\ -2 & 4 \\end{bmatrix} \\).",
+        answers: [
+          "\\( \\begin{bmatrix} 2 & -3 \\\\ -6 & 14 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 0 & 1 \\\\ 2 & 3 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 1 & -1 \\\\ -2 & 4 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} -2 & 5 \\\\ 8 & 10 \\end{bmatrix} \\)"
+        ],
+        correct: 0,
+        explanation: "Nhân ma trận: \\( \\begin{bmatrix} 1 & -1 \\\\ 2 & 3 \\end{bmatrix} \\times \\begin{bmatrix} 0 & 1 \\\\ -2 & 4 \\end{bmatrix} = \\begin{bmatrix} 1 \\cdot 0 + (-1) \\cdot (-2) & 1 \\cdot 1 + (-1) \\cdot 4 \\\\ 2 \\cdot 0 + 3 \\cdot (-2) & 2 \\cdot 1 + 3 \\cdot 4 \\end{bmatrix} = \\begin{bmatrix} 2 & -3 \\\\ -6 & 14 \\end{bmatrix} \\)."
+      },
+      {
+        question: "Cho \\( A = \\begin{bmatrix} 3 & 2 \\\\ 0 & 1 \\end{bmatrix} \\) và \\( B = \\begin{bmatrix} 1 & 0 \\\\ 4 & 2 \\end{bmatrix} \\). Tìm ma trận \\( A \\times B \\).",
+        answers: [
+          "\\( \\begin{bmatrix} 11 & 4 \\\\ 4 & 2 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 3 & 2 \\\\ 0 & 1 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 6 & 4 \\\\ 2 & 1 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 9 & 6 \\\\ 4 & 2 \\end{bmatrix} \\)"
+        ],
+        correct: 0,
+        explanation: "Nhân ma trận: \\( \\begin{bmatrix} 3 & 2 \\\\ 0 & 1 \\end{bmatrix} \\times \\begin{bmatrix} 1 & 0 \\\\ 4 & 2 \\end{bmatrix} = \\begin{bmatrix} 3 \\cdot 1 + 2 \\cdot 4 & 3 \\cdot 0 + 2 \\cdot 2 \\\\ 0 \\cdot 1 + 1 \\cdot 4 & 0 \\cdot 0 + 1 \\cdot 2 \\end{bmatrix} = \\begin{bmatrix} 11 & 4 \\\\ 4 & 2 \\end{bmatrix} \\)."
+      },
+      {
+        question: "Tính tích \\( A \\times B \\) với \\( A = \\begin{bmatrix} 4 & 1 \\\\ 2 & 5 \\end{bmatrix} \\) và \\( B = \\begin{bmatrix} 3 & -1 \\\\ 0 & 2 \\end{bmatrix} \\).",
+        answers: [
+          "\\( \\begin{bmatrix} 12 & -2 \\\\ 6 & 8 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 4 & 1 \\\\ 2 & 5 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 8 & -2 \\\\ 10 & 4 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 15 & -3 \\\\ 6 & 10 \\end{bmatrix} \\)"
+        ],
+        correct: 0,
+        explanation: "Nhân ma trận: \\( \\begin{bmatrix} 4 & 1 \\\\ 2 & 5 \\end{bmatrix} \\times \\begin{bmatrix} 3 & -1 \\\\ 0 & 2 \\end{bmatrix} = \\begin{bmatrix} 4 \\cdot 3 + 1 \\cdot 0 & 4 \\cdot (-1) + 1 \\cdot 2 \\\\ 2 \\cdot 3 + 5 \\cdot 0 & 2 \\cdot (-1) + 5 \\cdot 2 \\end{bmatrix} = \\begin{bmatrix} 12 & -2 \\\\ 6 & 8 \\end{bmatrix} \\)."
+      },
+      // Ma trận nghịch đảo
+      {
+        question: "Tìm ma trận nghịch đảo của \\( A = \\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix} \\).",
+        answers: [
+          "\\( \\begin{bmatrix} -2 & 1 \\\\ \\frac{3}{2} & -\\frac{1}{2} \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 4 & -2 \\\\ -3 & 1 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 2 & -1 \\\\ -3 & 2 \\end{bmatrix} \\)"
+        ],
+        correct: 0,
+        explanation: "Để tìm ma trận nghịch đảo của \\( A = \\begin{bmatrix} 1 & 2 \\\\ 3 & 4 \\end{bmatrix} \\), ta tính định thức: \\( \\det(A) = 1 \\cdot 4 - 2 \\cdot 3 = -2 \\). Ma trận nghịch đảo là \\( A^{-1} = \\frac{1}{\\det(A)} \\cdot \\begin{bmatrix} 4 & -2 \\\\ -3 & 1 \\end{bmatrix} = \\frac{1}{-2} \\cdot \\begin{bmatrix} 4 & -2 \\\\ -3 & 1 \\end{bmatrix} = \\begin{bmatrix} -2 & 1 \\\\ \\frac{3}{2} & -\\frac{1}{2} \\end{bmatrix} \\)."
+      },
+      {
+        question: "Tìm ma trận nghịch đảo của \\( A = \\begin{bmatrix} 2 & 1 \\\\ 1 & 3 \\end{bmatrix} \\).",
+        answers: [
+          "\\( \\begin{bmatrix} \\frac{3}{5} & -\\frac{1}{5} \\\\ -\\frac{1}{5} & \\frac{2}{5} \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 2 & 1 \\\\ 1 & 3 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 3 & -1 \\\\ -1 & 2 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 1 & -1 \\\\ -1 & 1 \\end{bmatrix} \\)"
+        ],
+        correct: 0,
+        explanation: "Định thức: \\( \\det(A) = 2 \\cdot 3 - 1 \\cdot 1 = 5 \\). Ma trận nghịch đảo: \\( A^{-1} = \\frac{1}{5} \\cdot \\begin{bmatrix} 3 & -1 \\\\ -1 & 2 \\end{bmatrix} = \\begin{bmatrix} \\frac{3}{5} & -\\frac{1}{5} \\\\ -\\frac{1}{5} & \\frac{2}{5} \\end{bmatrix} \\)."
+      },
+      {
+        question: "Tìm ma trận nghịch đảo của \\( A = \\begin{bmatrix} 4 & 1 \\\\ 2 & 3 \\end{bmatrix} \\).",
+        answers: [
+          "\\( \\begin{bmatrix} \\frac{3}{10} & -\\frac{1}{10} \\\\ -\\frac{1}{5} & \\frac{2}{5} \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 4 & 1 \\\\ 2 & 3 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 3 & -1 \\\\ -2 & 4 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 1 & -1 \\\\ -2 & 1 \\end{bmatrix} \\)"
+        ],
+        correct: 0,
+        explanation: "Định thức: \\( \\det(A) = 4 \\cdot 3 - 1 \\cdot 2 = 10 \\). Ma trận nghịch đảo: \\( A^{-1} = \\frac{1}{10} \\cdot \\begin{bmatrix} 3 & -1 \\\\ -2 & 4 \\end{bmatrix} = \\begin{bmatrix} \\frac{3}{10} & -\\frac{1}{10} \\\\ -\\frac{1}{5} & \\frac{2}{5} \\end{bmatrix} \\)."
+      },
+      {
+        question: "Tìm ma trận nghịch đảo của \\( A = \\begin{bmatrix} 1 & 0 \\\\ 2 & 3 \\end{bmatrix} \\).",
+        answers: [
+          "\\( \\begin{bmatrix} 1 & 0 \\\\ -\\frac{2}{3} & \\frac{1}{3} \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 1 & 0 \\\\ 2 & 3 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 3 & -2 \\\\ 0 & 1 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 0 & 1 \\\\ -2 & 1 \\end{bmatrix} \\)"
+        ],
+        correct: 0,
+        explanation: "Định thức: \\( \\det(A) = 1 \\cdot 3 - 0 \\cdot 2 = 3 \\). Ma trận nghịch đảo: \\( A^{-1} = \\frac{1}{3} \\cdot \\begin{bmatrix} 3 & 0 \\\\ -2 & 1 \\end{bmatrix} = \\begin{bmatrix} 1 & 0 \\\\ -\\frac{2}{3} & \\frac{1}{3} \\end{bmatrix} \\)."
+      },
+      {
+        question: "Tìm ma trận nghịch đảo của \\( A = \\begin{bmatrix} 3 & 2 \\\\ 1 & 4 \\end{bmatrix} \\).",
+        answers: [
+          "\\( \\begin{bmatrix} \\frac{4}{10} & -\\frac{2}{10} \\\\ -\\frac{1}{10} & \\frac{3}{10} \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 3 & 2 \\\\ 1 & 4 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 4 & -2 \\\\ -1 & 3 \\end{bmatrix} \\)",
+          "\\( \\begin{bmatrix} 2 & -1 \\\\ -1 & 2 \\end{bmatrix} \\)"
+        ],
+        correct: 0,
+        explanation: "Định thức: \\( \\det(A) = 3 \\cdot 4 - 2 \\cdot 1 = 10 \\). Ma trận nghịch đảo: \\( A^{-1} = \\frac{1}{10} \\cdot \\begin{bmatrix} 4 & -2 \\\\ -1 & 3 \\end{bmatrix} = \\begin{bmatrix} \\frac{4}{10} & -\\frac{2}{10} \\\\ -\\frac{1}{10} & \\frac{3}{10} \\end{bmatrix} \\)."
+      }
+    ];
+
+    // Vẽ minh họa ma trận bằng Canvas
+    function drawMatrix() {
+      const canvas = document.getElementById('matrixCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.font = '16px Arial';
+      // Ma trận A (nhân ma trận, câu 1)
+      ctx.fillText('A =', 10, 20);
+      ctx.beginPath();
+      ctx.moveTo(40, 10); ctx.lineTo(40, 90);
+      ctx.moveTo(100, 10); ctx.lineTo(100, 90);
+      ctx.moveTo(40, 10); ctx.lineTo(100, 10);
+      ctx.moveTo(40, 90); ctx.lineTo(100, 90);
+      ctx.stroke();
+      ctx.fillText('1 2', 60, 40);
+      ctx.fillText('3 4', 60, 70);
+      // Ma trận B (nhân ma trận, câu 1)
+      ctx.fillText('B =', 120, 20);
+      ctx.beginPath();
+      ctx.moveTo(150, 10); ctx.lineTo(150, 90);
+      ctx.moveTo(210, 10); ctx.lineTo(210, 90);
+      ctx.moveTo(150, 10); ctx.lineTo(210, 10);
+      ctx.moveTo(150, 90); ctx.lineTo(210, 90);
+      ctx.stroke();
+      ctx.fillText('5 6', 170, 40);
+      ctx.fillText('7 8', 170, 70);
+      // Ma trận A (nghịch đảo, câu 6)
+      ctx.fillText('A =', 230, 20);
+      ctx.beginPath();
+      ctx.moveTo(260, 10); ctx.lineTo(260, 90);
+      ctx.moveTo(320, 10); ctx.lineTo(320, 90);
+      ctx.moveTo(260, 10); ctx.lineTo(320, 10);
+      ctx.moveTo(260, 90); ctx.lineTo(320, 90);
+      ctx.stroke();
+      ctx.fillText('1 2', 280, 40);
+      ctx.fillText('3 4', 280, 70);
+    }
+
+    // Xử lý bắt đầu bài thi
+    document.getElementById('startQuiz').addEventListener('click', () => {
+      const name = document.getElementById('name').value.trim();
+      const studentId = document.getElementById('studentId').value.trim();
+      if (!name || !studentId) {
+        alert('Vui lòng nhập đầy đủ họ tên và mã số sinh viên.');
+        return;
+      }
+      document.getElementById('infoForm').classList.add('hidden');
+      document.getElementById('quizContainer').classList.remove('hidden');
+      // Tạo câu hỏi
+      const quizDiv = document.getElementById('quiz');
+      questions.forEach((q, index) => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'bg-white p-4 rounded shadow';
+        questionDiv.innerHTML = `
+          <p class="text-lg font-semibold mb-2">Câu ${index + 1}: ${q.question}</p>
+          <ul class="space-y-2">
+            ${q.answers.map((answer, i) => `
+              <li>
+                <label class="flex items-center">
+                  <input type="radio" name="q${index}" value="${i}" class="mr-2">
+                  ${answer}
+                </label>
+              </li>
+            `).join('')}
+          </ul>
+        `;
+        quizDiv.appendChild(questionDiv);
+      });
+      MathJax.typeset();
+      drawMatrix();
+    });
+
+    // Xử lý nộp bài
+    document.getElementById('submit').addEventListener('click', () => {
+      const name = document.getElementById('name').value.trim();
+      const studentId = document.getElementById('studentId').value.trim();
+      let score = 0;
+      let wrongAnswers = [];
+      questions.forEach((q, index) => {
+        const selected = document.querySelector(`input[name="q${index}"]:checked`);
+        if (selected && parseInt(selected.value) === q.correct) {
+          score++;
+        } else {
+          wrongAnswers.push({
+            index: index + 1,
+            question: q.question,
+            selected: selected ? q.answers[parseInt(selected.value)] : 'Chưa chọn',
+            correct: q.answers[q.correct],
+            explanation: q.explanation
+          });
+        }
+      });
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = `
+        <p class="font-semibold">Họ tên: ${name}</p>
+        <p class="font-semibold">Mã số sinh viên: ${studentId}</p>
+        <p class="font-semibold">Kết quả: Bạn đúng ${score}/10 câu.</p>
+        ${wrongAnswers.length > 0 ? '<h3 class="mt-4 text-xl font-semibold">Lời giải chi tiết cho các câu sai:</h3>' : ''}
+        ${wrongAnswers.map(w => `
+          <div class="mt-2">
+            <p><strong>Câu ${w.index}:</strong> ${w.question}</p>
+            <p><strong>Đáp án bạn chọn:</strong> ${w.selected}</p>
+            <p><strong>Đáp án đúng:</strong> ${w.correct}</p>
+            <p><strong>Lời giải:</strong> ${w.explanation}</p>
+          </div>
+        `).join('')}
+      `;
+      resultDiv.className = 'mt-4 text-left';
+      MathJax.typeset();
+    });
+  </script>
+</body>
+</html>
